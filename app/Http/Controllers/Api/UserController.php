@@ -20,8 +20,10 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(User $user)
+    public function show(string $id)
     {
+        $user = User::find($id);
+
         if (is_null($user)) {
             return response()->json(['status' => 'User not found'], 404);
         }
@@ -34,18 +36,9 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        // $data = $request->only([
-        //     'name',
-        //     'email',
-        //     'age',
-        //     'password',
-        // ]);
-
-        // $data['password'] = Hash::make($data['password']);
-
         $validatedData = $request->validate([
             'name' => ['required'],
-            'email' => ['required', 'email'],
+            'email' => ['required', 'email', 'unique:users,email,'],
             'age' => ['nullable', 'integer'],
             'password' => ['required'],
         ]);
@@ -53,8 +46,6 @@ class UserController extends Controller
         $validatedData['password'] = Hash::make($validatedData['password']);
 
         $newUser = new User($validatedData);
-
-        // TODO User exists
 
         if ($newUser->save()) {
             return response()->json(['status' => 'New user created successfully'], 201);
@@ -68,7 +59,10 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $user = User::findOrFail($id);
+        $user = User::find($id);
+        if (is_null($user)) {
+            return response()->json(['status' => 'User not found'], 404);
+        }
 
         $validatedData = $request->validate([
             'name' => ['required', 'max:255'],
